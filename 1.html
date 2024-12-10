@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Score Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f8f8f8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Student Score Tracker</h1>
+        <form id="loginForm">
+            <label for="studentName">Student Name</label>
+            <input type="text" id="studentName" placeholder="Enter your name" required>
+            <label for="score">Exam Score</label>
+            <input type="number" id="score" placeholder="Enter your score" required>
+            <button type="button" onclick="addScore()">Submit Score</button>
+        </form>
+
+        <table id="scoreTable">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Scores will be dynamically added here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Array to store student scores
+        const scores = [];
+
+        function addScore() {
+            const studentName = document.getElementById("studentName").value;
+            const score = document.getElementById("score").value;
+
+            if (studentName && score) {
+                // Add to the scores array
+                scores.push({ name: studentName, score: Number(score) });
+
+                // Update the table
+                updateTable();
+
+                // Clear the form
+                document.getElementById("loginForm").reset();
+            } else {
+                alert("Please fill out all fields.");
+            }
+        }
+
+        function updateTable() {
+            const tableBody = document.getElementById("scoreTable").querySelector("tbody");
+            tableBody.innerHTML = ""; // Clear the table
+
+            // Populate with updated scores
+            scores.forEach((entry) => {
+                const row = document.createElement("tr");
+                row.innerHTML = `<td>${entry.name}</td><td>${entry.score}</td>`;
+                tableBody.appendChild(row);
+            });
+        }
+    </script>
+</body>
+</html>
