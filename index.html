@@ -1,109 +1,178 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Score Tracker</title>
+    <title>영어 시험 결과 기록</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
+            max-width: 800px;
+            margin: 0 auto;
             padding: 20px;
-            background-color: #f4f4f9;
+            background-color: #f5f5f5;
         }
         .container {
-            max-width: 600px;
-            margin: auto;
-            background: #fff;
+            background-color: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        h1 {
-            text-align: center;
+        .form-group {
+            margin-bottom: 15px;
         }
         label {
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
         }
-        input, button {
+        input {
             width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ccc;
             padding: 8px;
-            text-align: center;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
         }
-        th {
-            background-color: #f8f8f8;
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        .result-table th, .result-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .result-table th {
+            background-color: #f2f2f2;
+        }
+        #testSection {
+            display: none;
+        }
+        #resultSection {
+            display: none;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Student Score Tracker</h1>
-        <form id="loginForm">
-            <label for="studentName">Student Name</label>
-            <input type="text" id="studentName" placeholder="Enter your name" required>
-            <label for="score">Exam Score</label>
-            <input type="number" id="score" placeholder="Enter your score" required>
-            <button type="button" onclick="addScore()">Submit Score</button>
-        </form>
+        <div id="loginSection">
+            <h2>사용자 정보 입력</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="name">이름:</label>
+                    <input type="text" id="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="school">학교:</label>
+                    <input type="text" id="school" required>
+                </div>
+                <button type="submit">로그인</button>
+            </form>
+        </div>
 
-        <table id="scoreTable">
-            <thead>
-                <tr>
-                    <th>Student Name</th>
-                    <th>Score</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Scores will be dynamically added here -->
-            </tbody>
-        </table>
+        <div id="testSection">
+            <h2>영어 시험</h2>
+            <p>안녕하세요, <span id="userName"></span>님!</p>
+            <p>아래 버튼을 클릭하여 영어 시험을 시작해주세요.</p>
+            <button onclick="window.open('https://www.cambridgeenglish.org/test-your-english/young-learners/', '_blank')">
+                시험 시작하기
+            </button>
+            <button onclick="showResultSection()">시험 완료</button>
+        </div>
+
+        <div id="resultSection">
+            <h2>시험 결과 입력</h2>
+            <div class="form-group">
+                <label for="score">점수:</label>
+                <input type="number" id="score" min="0" max="100" required>
+            </div>
+            <button onclick="saveResult()">결과 저장</button>
+
+            <h3>이전 결과</h3>
+            <table class="result-table">
+                <thead>
+                    <tr>
+                        <th>날짜</th>
+                        <th>이름</th>
+                        <th>학교</th>
+                        <th>점수</th>
+                    </tr>
+                </thead>
+                <tbody id="resultTableBody">
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <script>
-        // Array to store student scores
-        const scores = [];
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const school = document.getElementById('school').value;
+            
+            document.getElementById('userName').textContent = name;
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('testSection').style.display = 'block';
+            
+            // 사용자 정보 저장
+            localStorage.setItem('currentUser', JSON.stringify({ name, school }));
+        });
 
-        function addScore() {
-            const studentName = document.getElementById("studentName").value;
-            const score = document.getElementById("score").value;
-
-            if (studentName && score) {
-                // Add to the scores array
-                scores.push({ name: studentName, score: Number(score) });
-
-                // Update the table
-                updateTable();
-
-                // Clear the form
-                document.getElementById("loginForm").reset();
-            } else {
-                alert("Please fill out all fields.");
-            }
+        function showResultSection() {
+            document.getElementById('resultSection').style.display = 'block';
+            displayResults();
         }
 
-        function updateTable() {
-            const tableBody = document.getElementById("scoreTable").querySelector("tbody");
-            tableBody.innerHTML = ""; // Clear the table
+        function saveResult() {
+            const score = document.getElementById('score').value;
+            if (!score) {
+                alert('점수를 입력해주세요.');
+                return;
+            }
 
-            // Populate with updated scores
-            scores.forEach((entry) => {
-                const row = document.createElement("tr");
-                row.innerHTML = `<td>${entry.name}</td><td>${entry.score}</td>`;
-                tableBody.appendChild(row);
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            const result = {
+                date: new Date().toLocaleDateString(),
+                name: currentUser.name,
+                school: currentUser.school,
+                score: score
+            };
+
+            // 기존 결과 가져오기
+            let results = JSON.parse(localStorage.getItem('testResults')) || [];
+            results.push(result);
+            localStorage.setItem('testResults', JSON.stringify(results));
+
+            displayResults();
+            document.getElementById('score').value = '';
+            alert('결과가 저장되었습니다.');
+        }
+
+        function displayResults() {
+            const results = JSON.parse(localStorage.getItem('testResults')) || [];
+            const tableBody = document.getElementById('resultTableBody');
+            tableBody.innerHTML = '';
+
+            results.forEach(result => {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = result.date;
+                row.insertCell().textContent = result.name;
+                row.insertCell().textContent = result.school;
+                row.insertCell().textContent = result.score;
             });
         }
     </script>
