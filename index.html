@@ -41,6 +41,7 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
+            margin-right: 10px;
         }
         button:hover {
             background-color: #45a049;
@@ -58,12 +59,13 @@
         .result-table th {
             background-color: #f2f2f2;
         }
-        #testSection {
+        #testSection, #resultSection {
             display: none;
         }
-        #resultSection {
-            display: none;
-            margin-top: 20px;
+        .admin-notice {
+            color: #ff4444;
+            font-weight: bold;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -102,11 +104,15 @@
             </div>
             <button onclick="saveResult()">결과 저장</button>
 
-            <h3>이전 결과</h3>
+            <h3>시험 결과</h3>
+            <div id="adminControls" style="display: none;">
+                <p class="admin-notice">관리자 계정으로 로그인하셨습니다. 전체 결과를 확인할 수 있습니다.</p>
+            </div>
             <table class="result-table">
                 <thead>
                     <tr>
                         <th>날짜</th>
+                        <th>시간</th>
                         <th>이름</th>
                         <th>학교</th>
                         <th>점수</th>
@@ -119,17 +125,31 @@
     </div>
 
     <script>
+        const ADMIN_NAME = 'ucc';
+        const ADMIN_SCHOOL = '6123';
+        let isAdmin = false;
+        let currentUserName = '';
+
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const name = document.getElementById('name').value;
             const school = document.getElementById('school').value;
             
+            // 관리자 체크
+            isAdmin = (name === ADMIN_NAME && school === ADMIN_SCHOOL);
+            currentUserName = name;
+
             document.getElementById('userName').textContent = name;
             document.getElementById('loginSection').style.display = 'none';
             document.getElementById('testSection').style.display = 'block';
             
             // 사용자 정보 저장
             localStorage.setItem('currentUser', JSON.stringify({ name, school }));
+
+            // 관리자 컨트롤 표시
+            if (isAdmin) {
+                document.getElementById('adminControls').style.display = 'block';
+            }
         });
 
         function showResultSection() {
@@ -145,8 +165,10 @@
             }
 
             const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            const now = new Date();
             const result = {
-                date: new Date().toLocaleDateString(),
+                date: now.toLocaleDateString(),
+                time: now.toLocaleTimeString(),
                 name: currentUser.name,
                 school: currentUser.school,
                 score: score
@@ -167,9 +189,13 @@
             const tableBody = document.getElementById('resultTableBody');
             tableBody.innerHTML = '';
 
-            results.forEach(result => {
+            // 관리자가 아닌 경우 본인 결과만 필터링
+            const filteredResults = isAdmin ? results : results.filter(result => result.name === currentUserName);
+
+            filteredResults.forEach(result => {
                 const row = tableBody.insertRow();
                 row.insertCell().textContent = result.date;
+                row.insertCell().textContent = result.time;
                 row.insertCell().textContent = result.name;
                 row.insertCell().textContent = result.school;
                 row.insertCell().textContent = result.score;
