@@ -46,6 +46,15 @@
         button:hover {
             background-color: #45a049;
         }
+        .edit-btn {
+            background-color: #2196F3;
+        }
+        .delete-btn {
+            background-color: #f44336;
+        }
+        .save-edit-btn {
+            background-color: #FF9800;
+        }
         .result-table {
             width: 100%;
             margin-top: 20px;
@@ -66,6 +75,10 @@
             color: #ff4444;
             font-weight: bold;
             margin-top: 10px;
+        }
+        .edit-mode input {
+            width: 90%;
+            margin: 2px;
         }
     </style>
 </head>
@@ -106,7 +119,7 @@
 
             <h3>시험 결과</h3>
             <div id="adminControls" style="display: none;">
-                <p class="admin-notice">관리자 계정으로 로그인하셨습니다. 전체 결과를 확인할 수 있습니다.</p>
+                <p class="admin-notice">관리자 계정으로 로그인하셨습니다. 전체 결과를 확인하고 편집할 수 있습니다.</p>
             </div>
             <table class="result-table">
                 <thead>
@@ -116,6 +129,7 @@
                         <th>이름</th>
                         <th>학교</th>
                         <th>점수</th>
+                        <th id="actionColumn" style="display: none;">관리</th>
                     </tr>
                 </thead>
                 <tbody id="resultTableBody">
@@ -149,6 +163,7 @@
             // 관리자 컨트롤 표시
             if (isAdmin) {
                 document.getElementById('adminControls').style.display = 'block';
+                document.getElementById('actionColumn').style.display = 'table-cell';
             }
         });
 
@@ -167,6 +182,7 @@
             const currentUser = JSON.parse(localStorage.getItem('currentUser'));
             const now = new Date();
             const result = {
+                id: Date.now(), // 고유 ID 추가
                 date: now.toLocaleDateString(),
                 time: now.toLocaleTimeString(),
                 name: currentUser.name,
@@ -174,7 +190,6 @@
                 score: score
             };
 
-            // 기존 결과 가져오기
             let results = JSON.parse(localStorage.getItem('testResults')) || [];
             results.push(result);
             localStorage.setItem('testResults', JSON.stringify(results));
@@ -189,17 +204,90 @@
             const tableBody = document.getElementById('resultTableBody');
             tableBody.innerHTML = '';
 
-            // 관리자가 아닌 경우 본인 결과만 필터링
             const filteredResults = isAdmin ? results : results.filter(result => result.name === currentUserName);
 
             filteredResults.forEach(result => {
                 const row = tableBody.insertRow();
-                row.insertCell().textContent = result.date;
-                row.insertCell().textContent = result.time;
-                row.insertCell().textContent = result.name;
-                row.insertCell().textContent = result.school;
-                row.insertCell().textContent = result.score;
+                if (!isAdmin) {
+                    // 일반 사용자용 표시
+                    row.insertCell().textContent = result.date;
+                    row.insertCell().textContent = result.time;
+                    row.insertCell().textContent = result.name;
+                    row.insertCell().textContent = result.school;
+                    row.insertCell().textContent = result.score;
+                } else {
+                    // 관리자용 표시 (기본 모드)
+                    row.setAttribute('data-id', result.id);
+                    row.insertCell().textContent = result.date;
+                    row.insertCell().textContent = result.time;
+                    row.insertCell().textContent = result.name;
+                    row.insertCell().textContent = result.school;
+                    row.insertCell().textContent = result.score;
+                    
+                    // 관리 버튼 셀
+                    const actionCell = row.insertCell();
+                    const editBtn = document.createElement('button');
+                    editBtn.textContent = '수정';
+                    editBtn.className = 'edit-btn';
+                    editBtn.onclick = () => editRow(row, result);
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = '삭제';
+                    deleteBtn.className = 'delete-btn';
+                    deleteBtn.onclick = () => deleteRow(result.id);
+                    
+                    actionCell.appendChild(editBtn);
+                    actionCell.appendChild(deleteBtn);
+                }
             });
+        }
+
+        function editRow(row, result) {
+            // 편집 모드로 전환
+            row.innerHTML = `
+                <td><input type="text" value="${result.date}" class="edit-date"></td>
+                <td><input type="text" value="${result.time}" class="edit-time"></td>
+                <td><input type="text" value="${result.name}" class="edit-name"></td>
+                <td><input type="text" value="${result.school}" class="edit-school"></td>
+                <td><input type="number" value="${result.score}" class="edit-score"></td>
+                <td>
+                    <button class="save-edit-btn" onclick="saveEdit(${result.id})">저장</button>
+                    <button class="delete-btn" onclick="cancelEdit()">취소</button>
+                </td>
+            `;
+        }
+
+        function saveEdit(id) {
+            const row = document.querySelector(`tr[data-id="${id}"]`);
+            const newData = {
+                id: id,
+                date: row.querySelector('.edit-date').value,
+                time: row.querySelector('.edit-time').value,
+                name: row.querySelector('.edit-name').value,
+                school: row.querySelector('.edit-school').value,
+                score: row.querySelector('.edit-score').value
+            };
+
+            let results = JSON.parse(localStorage.getItem('testResults')) || [];
+            results = results.map(result => result.id === id ? newData : result);
+            localStorage.setItem('testResults', JSON.stringify(results));
+            
+            displayResults();
+            alert('수정이 완료되었습니다.');
+        }
+
+        function deleteRow(id) {
+            if (confirm('정말 이 결과를 삭제하시겠습니까?')) {
+                let results = JSON.parse(localStorage.getItem('testResults')) || [];
+                results = results.filter(result => result.id !== id);
+                localStorage.setItem('testResults', JSON.stringify(results));
+                displayResults();
+                alert('삭제되었습니다.');
+            }
+        }
+
+        function cancelEdit() {
+            displayResults();
         }
     </script>
 </body>
